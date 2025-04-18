@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AK Creations</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #83a4d4, #b6fbff);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-top: 40px;
+      animation: fadeInDown 1s ease-out;
+      color: #333;
+    }
+
+    @keyframes fadeInDown {
+      0% { opacity: 0; transform: translateY(-50px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-container {
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .subject-btn {
+      padding: 15px 30px;
+      margin: 15px;
+      font-size: 1.2em;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s ease, background-color 0.3s;
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .subject-btn:hover {
+      background-color: #0056b3;
+      transform: scale(1.1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .image-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .image-gallery img {
+      max-width: 200px;
+      margin: 10px;
+      border: 3px solid #333;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .image-gallery img:hover {
+      transform: scale(1.1);
+    }
+
+    #uploadSection {
+      margin-top: 30px;
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .back-btn:hover {
+      background-color: #c82333;
+    }
+
+    .full-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .full-view img {
+      max-width: 90%;
+      max-height: 90%;
+      border: 5px solid white;
+      border-radius: 10px;
+    }
+
+    .full-view button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .full-view button:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <h1>AK Creations</h1>
+  <div class="btn-container">
+    <button class="subject-btn" onclick="navigateToUpload('MAD')">MAD</button>
+    <button class="subject-btn" onclick="navigateToUpload('PHP')">PHP</button>
+    <button class="subject-btn" onclick="navigateToUpload('AI')">AI</button>
+    <button class="subject-btn" onclick="navigateToUpload('WCMS')">WCMS</button>
+  </div>
+
+  <div id="uploadSection" style="display: none;">
+    <button class="back-btn" onclick="goBack()">Back</button>
+    <h1 id="currentSubject"></h1>
+    <input type="file" id="imageInput" accept="image/*" multiple>
+    <button onclick="addImages()">Add</button>
+    <div class="image-gallery" id="imageGallery"></div>
+  </div>
+
+  <div id="fullView" class="full-view" style="display: none;">
+    <img id="fullViewImage" src="" alt="Full View">
+    <button onclick="closeFullView()">Close</button>
+  </div>
+
+  <script>
+    function navigateToUpload(subject) {
+      document.querySelector('.btn-container').style.display = 'none';
+      document.getElementById('uploadSection').style.display = 'block';
+      document.getElementById('currentSubject').textContent = `Upload images for ${subject}`;
+      loadImages(subject);
+    }
+
+    function goBack() {
+      document.querySelector('.btn-container').style.display = 'flex';
+      document.getElementById('uploadSection').style.display = 'none';
+    }
+
+    function addImages() {
+      const files = document.getElementById('imageInput').files;
+      if (files.length === 0) {
+        alert('No images selected!');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to add ${files.length} image(s)?`)) {
+        return;
+      }
+
+      const subject = document.getElementById('currentSubject').textContent.split(' ')[3];
+      const galleryKey = `${subject}-gallery`;
+      let gallery = JSON.parse(localStorage.getItem(galleryKey)) || [];
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          gallery.push(reader.result);
+          localStorage.setItem(galleryKey, JSON.stringify(gallery));
+          loadImages(subject); // Ensure only the current subject's images are loaded
+        };
+        reader.readAsDataURL(file);
+      });
+
+      alert('Images added successfully!');
+    }
+
+    function loadImages(subject) {
+      const galleryKey = `${subject}-gallery`;
+      const gallery = JSON.parse(localStorage.getItem(galleryKey)) || [];
+      const imageGallery = document.getElementById('imageGallery');
+      imageGallery.innerHTML = ''; // Clear the gallery before loading new images
+
+      gallery.forEach((src, index) => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.title = "Click to view";
+        img.onclick = () => openFullView(src);
+
+        let holdTimeout;
+        img.onmousedown = () => {
+          holdTimeout = setTimeout(() => {
+            if (confirm('Do you want to delete this image?')) {
+              gallery.splice(index, 1);
+              localStorage.setItem(galleryKey, JSON.stringify(gallery));
+              loadImages(subject); // Reload images after deletion
+            }
+          }, 3000);
+        };
+
+        img.ontouchstart = () => {
+          holdTimeout = setTimeout(() => {
+            if (confirm('Do you want to delete this image?')) {
+              gallery.splice(index, 1);
+              localStorage.setItem(galleryKey, JSON.stringify(gallery));
+              loadImages(subject); // Reload images after deletion
+            }
+          }, 3000);
+        };
+
+        img.onmouseup = () => clearTimeout(holdTimeout);
+        img.onmouseleave = () => clearTimeout(holdTimeout);
+        img.ontouchend = () => clearTimeout(holdTimeout);
+
+        imageGallery.appendChild(img);
+      });
+    }
+
+    function openFullView(src) {
+      const fullView = document.getElementById('fullView');
+      const fullViewImage = document.getElementById('fullViewImage');
+      fullViewImage.src = src;
+      fullView.style.display = 'flex';
+    }
+
+    function closeFullView() {
+      document.getElementById('fullView').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
